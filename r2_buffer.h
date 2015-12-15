@@ -1,8 +1,8 @@
-// simple_buffer.h
+// r2_buffer.h
 // A (very) simple buffer.
 
-#ifndef SIMPLE_BUFFER_H
-#define SIMPLE_BUFFER_H
+#ifndef R2_BUFFER_H
+#define R2_BUFFER_H
 
 #include <stdio.h> // for fprintf, stderr
 #include <stdlib.h> // for free, calloc
@@ -10,41 +10,41 @@
 #include <unistd.h> // for read
 #include <sys/ioctl.h> // to get the number of bytes available on a fd
 
-struct simple_buffer {
+struct r2_buffer {
     char *data;
     size_t position;
     size_t size;
 };
 
-struct simple_buffer * simple_buffer_create( size_t size );
+struct r2_buffer * r2_buffer_create( size_t size );
 
-void simple_buffer_destroy( struct simple_buffer * b );
+void r2_buffer_destroy( struct r2_buffer * b );
 
-size_t simple_buffer_available_data( const struct simple_buffer * b );
+size_t r2_buffer_available_data( const struct r2_buffer * b );
 
-size_t simple_buffer_available_space( const struct simple_buffer * b );
+size_t r2_buffer_available_space( const struct r2_buffer * b );
 
-size_t simple_buffer_fill( struct simple_buffer * b, int fd );
+size_t r2_buffer_fill( struct r2_buffer * b, int fd );
 
-size_t simple_buffer_get_line( char * line, struct simple_buffer * b, size_t maxlen );
+size_t r2_buffer_get_line( char * line, struct r2_buffer * b, size_t maxlen );
 
-void simple_buffer_print( const struct simple_buffer * b );
+void r2_buffer_print( const struct r2_buffer * b );
 
-#endif // SIMPLE_BUFFER_H
+#endif // R2_BUFFER_H
 
-#ifndef SIMPLE_BUFFER_I
-#define SIMPLE_BUFFER_I
+#ifndef R2_BUFFER_I
+#define R2_BUFFER_I
 
-struct simple_buffer * simple_buffer_create( size_t size )
+struct r2_buffer * r2_buffer_create( size_t size )
 {
-    struct simple_buffer * b = calloc(1, sizeof(struct simple_buffer));
+    struct r2_buffer * b = calloc(1, sizeof(struct r2_buffer));
     b->size = size;
     b->position = 0;
     b->data = calloc(size + 1, 1);
     return b;
 }
 
-void simple_buffer_destroy( struct simple_buffer * b )
+void r2_buffer_destroy( struct r2_buffer * b )
 {
     if( b ) {
         free(b->data);
@@ -52,17 +52,17 @@ void simple_buffer_destroy( struct simple_buffer * b )
     }
 }
 
-size_t simple_buffer_available_data( const struct simple_buffer * b )
+size_t r2_buffer_available_data( const struct r2_buffer * b )
 {
    return b->position;
 }
 
-size_t simple_buffer_available_space( const struct simple_buffer * b )
+size_t r2_buffer_available_space( const struct r2_buffer * b )
 {
     return b->size - b->position;
 }
 
-size_t simple_buffer_fill( struct simple_buffer * b, int fd )
+size_t r2_buffer_fill( struct r2_buffer * b, int fd )
 {
     size_t space = b->size - b->position;
     size_t incoming = 0; // bytes available on the serial port
@@ -73,7 +73,7 @@ size_t simple_buffer_fill( struct simple_buffer * b, int fd )
     return bytes_read;
 }
 
-size_t simple_buffer_get_line( char * line, struct simple_buffer * b, size_t maxlen )
+size_t r2_buffer_get_line( char * line, struct r2_buffer * b, size_t maxlen )
 {
     size_t delimiter_position = 0;
     memset(b->data + b->position + 1, '\0', 1); // limit the strstr search, just in case
@@ -107,7 +107,7 @@ size_t simple_buffer_get_line( char * line, struct simple_buffer * b, size_t max
     return delimiter_position;
 }
 
-void simple_buffer_print( const struct simple_buffer * b )
+void r2_buffer_print( const struct r2_buffer * b )
 {
     size_t i;
     fprintf(stderr, "| ");
@@ -118,4 +118,4 @@ void simple_buffer_print( const struct simple_buffer * b )
     fflush(stderr);
 }
 
-#endif // SIMPLE_BUFFER_I
+#endif // R2_BUFFER_I
