@@ -38,6 +38,7 @@ size_t simple_buffer_fill( struct simple_buffer * b, int fd )
     size_t bytes_to_read = space > incoming ? incoming : space;
     size_t bytes_read = read(fd, b->data + b->position, bytes_to_read);
     b->position += bytes_read;
+    return bytes_read;
 }
 
 size_t simple_buffer_get_line( char * line, struct simple_buffer * b, size_t maxlen )
