@@ -11,6 +11,8 @@
 #include <sys/ioctl.h> // to get the number of bytes available on a serial port
 #include <sys/select.h> // to select on the file descriptor for a serial port
 
+#include "r2_buffer.h"
+
 #endif // R2_SERIAL_PORT_H
 
 struct r2_serial_port {
