@@ -43,7 +43,7 @@ static void r2_sli_management_control_handler( const lcm_recv_buf_t *rbuf,
         void * user);
 
 static void r2_sli_raw_serial_line_publisher( lcm_t * lcm, const char * channel,
-        const char * line, const int64_t epoch_usec );
+        raw_string_t * msg, const char * line, const int64_t epoch_usec );
 
 static void r2_sli_stream( struct r2_sli * self, void * data_splitter,
         void * publisher, const int64_t period );
@@ -109,18 +109,12 @@ void r2_sli_management_control_handler(const lcm_recv_buf_t *rbuf,
 
 /*** Output publishers ***/
 
-// TODO: evaluate how much this affects performance vs. keeping the msg allocated
 void r2_sli_raw_serial_line_publisher( lcm_t * lcm, const char * channel,
-        const char * line, const int64_t epoch_usec )
+        raw_string_t * msg, const char * line, const int64_t epoch_usec )
 {
-    // Need to make explicit copies if instantiating message types within the
-    // publisher, otherwise you can't guarantee const args will still be the 
-    // same after the function completes.
-    raw_string_t msg = {
-        .epoch_usec = epoch_usec,
-        .text = strdup( line ), // because I don't want to change the data
-    };
-    raw_string_t_publish( lcm, channel, &msg );
+    msg->epoch_usec = epoch_usec;
+    msg->text = strdup( line );
+    raw_string_t_publish( lcm, channel, msg );
 }
 
 /*** Streaming methods ***/
