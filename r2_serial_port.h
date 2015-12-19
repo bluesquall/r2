@@ -32,7 +32,7 @@ const struct termios R2_SERIAL_DEFAULT_OPTIONS = {
  *
  */
 struct r2_serial_port * r2_serial_port_create( const char * device,
-        size_t buffer_size );
+        const speed_t baud_rate, const size_t buffer_size );
 /*
  *
  */
@@ -59,7 +59,7 @@ int r2_serial_port_set_baud_rate( struct r2_serial_port * self,
 #define R2_SERIAL_PORT_I
 
 struct r2_serial_port * r2_serial_port_create( const char * device,
-        size_t buffer_size )
+        const speed_t baud_rate, const size_t buffer_size )
 {
     struct r2_serial_port * self = calloc( 1, sizeof( struct r2_serial_port ) );
 
@@ -75,8 +75,17 @@ struct r2_serial_port * r2_serial_port_create( const char * device,
 #endif
     }
 
-    r2_serial_port_set_options( self, NULL );
-    // r2_serial_port_set_options( self, &R2_SERIAL_DEFAULT_OPTIONS );
+    if( -1 == r2_serial_port_set_options( self, NULL ) ) {
+        fprintf(stderr, "could not set termios options\n");
+        return NULL;
+    }
+
+    if( NULL != baud_rate ) {
+        if( -1 == r2_serial_port_set_baud_rate( self, baud_rate ) ) {
+            fprintf(stderr, "could not set baudrate\n");
+            return NULL;
+        }
+    }
 
     self->buffer = r2_buffer_create( buffer_size );
     if( !self->buffer ) {
