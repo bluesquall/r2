@@ -80,7 +80,7 @@ struct r2_serial_port * r2_serial_port_create( const char * device,
         return NULL;
     }
 
-    if( NULL != baud_rate ) {
+    if( -1 != baud_rate ) {
         if( -1 == r2_serial_port_set_baud_rate( self, baud_rate ) ) {
             fprintf(stderr, "could not set baudrate\n");
             return NULL;
