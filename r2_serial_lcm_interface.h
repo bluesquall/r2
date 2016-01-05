@@ -113,7 +113,7 @@ void r2_sli_raw_serial_line_publisher( lcm_t * lcm, const char * channel,
         raw_string_t * msg, const char * line, const int64_t epoch_usec )
 {
     msg->epoch_usec = epoch_usec;
-    msg->text = strdup( line );
+    msg->text = (char *)line; // cast to explicitly drop const modifier
     raw_string_t_publish( lcm, channel, msg );
 }
 
