@@ -42,8 +42,9 @@ static void r2_sli_management_control_handler( const lcm_recv_buf_t *rbuf,
         const char * channel, const management_control_t * msg,
         void * user);
 
-static void r2_sli_raw_serial_line_publisher( lcm_t * lcm, const char * channel,
-        raw_string_t * msg, const char * line, const int64_t epoch_usec );
+static void r2_sli_raw_serial_line_publisher( struct r2_sli * self, 
+        const char * channel, raw_string_t * msg, const char * line,
+        const int64_t epoch_usec );
 
 static void r2_sli_stream( struct r2_sli * self, void * data_splitter,
         void * publisher, const int64_t period );
@@ -109,12 +110,13 @@ void r2_sli_management_control_handler(const lcm_recv_buf_t *rbuf,
 
 /*** Output publishers ***/
 
-void r2_sli_raw_serial_line_publisher( lcm_t * lcm, const char * channel,
-        raw_string_t * msg, const char * line, const int64_t epoch_usec )
+void r2_sli_raw_serial_line_publisher( struct r2_sli * self, 
+        const char * channel, raw_string_t * msg, const char * line,
+        const int64_t epoch_usec )
 {
     msg->epoch_usec = epoch_usec;
     msg->text = (char *)line; // cast to explicitly drop const modifier
-    raw_string_t_publish( lcm, channel, msg );
+    raw_string_t_publish( self->lcm, channel, msg );
 }
 
 /*** Streaming methods ***/
