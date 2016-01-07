@@ -44,8 +44,8 @@ static void r2_ali_management_control_handler( const lcm_recv_buf_t *rbuf,
         const char * channel, const management_control_t * msg,
         void * user);
 
-static void r2_ali_raw_adc_publisher( lcm_t * lcm, const char * channel,
-        raw_adc_t * msg, const long count, const int64_t epoch_usec );
+static void r2_ali_raw_adc_publisher( struct r2_ali * self, const char * channel,
+        raw_adc_t * msg, const long counts, const int64_t epoch_usec );
 
 static void r2_ali_stream( struct r2_ali * self, r2_ali_publisher publisher,
         const int64_t period );
@@ -115,13 +115,13 @@ void r2_ali_management_control_handler(const lcm_recv_buf_t *rbuf,
 
 /*** Output publishers ***/
 
-void r2_ali_raw_adc_publisher( lcm_t * lcm, const char * channel,
+void r2_ali_raw_adc_publisher( struct r2_ali * self, const char * channel,
         raw_adc_t * msg, const long counts, const int64_t epoch_usec )
 {
     msg->epoch_usec = epoch_usec;
     msg->counts = counts;
-    msg->volts = 0; // TODO: msg->volts = r2_adc_volts( self->adc, counts );
-    raw_adc_t_publish( lcm, channel, msg );
+    msg->volts = r2_adc_volts( self->adc, counts );
+    raw_adc_t_publish( self->lcm, channel, msg );
 }
 
 /*** Streaming methods ***/
