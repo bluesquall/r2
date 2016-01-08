@@ -25,6 +25,7 @@
 #include "r2_serial_port.h"
 
 struct r2_sli {
+    management_process_t process;
     struct r2_serial_port * sio;
     lcm_t * lcm;
     management_control_t_subscription_t * management_control_subscription; 
@@ -33,8 +34,9 @@ struct r2_sli {
 typedef void ( * r2_sli_publisher )( struct r2_sli * self, const char * data,
         const int64_t epoch_usec );
 
-struct r2_sli * r2_sli_create( const char * device, const speed_t baud_rate,
-    const size_t buffer_size, const char * provider );
+struct r2_sli * r2_sli_create( const char * name,  const char * device,
+        const speed_t baud_rate, const size_t buffer_size,
+        const char * provider );
 
 static void r2_sli_destroy( struct r2_sli * self );
 
@@ -57,8 +59,8 @@ static void r2_sli_stream_line( struct r2_sli * self,
 #ifndef R2_SLI_I
 #define R2_SLI_I
 
-struct r2_sli * r2_sli_create(const char * device, speed_t baud_rate,
-    size_t buffer_size, const char * provider)
+struct r2_sli * r2_sli_create( const char * name,  const char * device,
+        speed_t baud_rate, size_t buffer_size, const char * provider)
 {
     struct r2_sli * self = calloc(1, sizeof(struct r2_sli));
 
@@ -66,6 +68,9 @@ struct r2_sli * r2_sli_create(const char * device, speed_t baud_rate,
         fprintf(stderr, "Could not allocate memory for serial-LCM interface.");
         return NULL;
     }
+
+    self->process.name = (char *)name;
+    self->process.id = getpid();
 
     self->sio = r2_serial_port_create( device, baud_rate, buffer_size );
     if( !self->sio ) {
