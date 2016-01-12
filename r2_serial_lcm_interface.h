@@ -84,9 +84,12 @@ struct r2_sli * r2_sli_create( const char * name,  const char * device,
         return NULL;
     }
 
-    self->management_control_subscription = management_control_t_subscribe( 
-            self->lcm, "WETLabs.BB2FL.process_control", 
-            &r2_sli_management_control_handler, NULL);
+    char control_channel[strlen( name ) + 5];
+    sprintf( control_channel, "%s.ctrl", name );
+
+    self->management_control_subscription = management_control_t_subscribe(
+            self->lcm, control_channel, &r2_sli_management_control_handler,
+            NULL);
 
     return self;
 }
