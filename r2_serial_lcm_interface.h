@@ -137,7 +137,7 @@ void r2_sli_stream_line( struct r2_sli * self, r2_sli_publisher publisher,
         const int64_t period_usec )
 {
     // TODO: Revise to simply call r2_sli_stream.
-    const struct timespec period = { 0, 950 * period_usec };
+    const struct timespec period = { 0, 900 * period_usec };
     fd_set rfds; // file descriptors to check for readability with select
     const int sfd = self->sio->fd;
     const int lfd = lcm_get_fileno(self->lcm);
@@ -162,6 +162,7 @@ void r2_sli_stream_line( struct r2_sli * self, r2_sli_publisher publisher,
                             line_size ) ) {
                     epoch_usec = r2_epoch_usec_now(); // update timestamp
                     publisher( self, line, epoch_usec ); // process & publish
+                    r2_buffer_fill( self->sio->buffer, sfd ); // get moar data
                 }
             }
             if( FD_ISSET( lfd, &rfds ) ) { // then check for LCM input
