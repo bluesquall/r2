@@ -12,30 +12,30 @@ int64_t r2_epoch_usec_now( void );
 int64_t r2_epoch_msec_now( void );
 int64_t r2_epoch_sec_now( void );
 
-// TODO: conversion functions to/from timeval 
+// TODO: conversion functions to/from timeval
 
 #endif // R2_EPOCH_H
 
 #ifndef R2_EPOCH_I
 #define R2_EPOCH_I
 int64_t r2_epoch_usec_now( void )
-{               
+{
     struct timeval utc;
-    gettimeofday(&utc, NULL);  
+    gettimeofday(&utc, NULL);
     return (int64_t)utc.tv_sec * 1000000 + (int64_t)utc.tv_usec;
 }
 
 int64_t r2_epoch_msec_now( void )
-{               
+{
     struct timeval utc;
-    gettimeofday(&utc, NULL);  
+    gettimeofday(&utc, NULL);
     return (int64_t)utc.tv_sec * 1000 + (int64_t)utc.tv_usec % 1000;
 }
 
 int64_t r2_epoch_sec_now( void )
-{               
+{
     struct timeval utc;
-    gettimeofday(&utc, NULL);  
+    gettimeofday(&utc, NULL);
     return (int64_t)utc.tv_sec;
 }
 

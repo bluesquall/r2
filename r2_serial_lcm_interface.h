@@ -28,7 +28,7 @@ struct r2_sli {
     management_process_t process;
     struct r2_serial_port * sio;
     lcm_t * lcm;
-    management_control_t_subscription_t * management_control_subscription; 
+    management_control_t_subscription_t * management_control_subscription;
 };
 
 typedef void ( * r2_sli_publisher )( struct r2_sli * self, const char * data,
@@ -44,14 +44,14 @@ static void r2_sli_management_control_handler( const lcm_recv_buf_t *rbuf,
         const char * channel, const management_control_t * msg,
         void * user);
 
-static void r2_sli_raw_serial_line_publisher( struct r2_sli * self, 
+static void r2_sli_raw_serial_line_publisher( struct r2_sli * self,
         const char * channel, raw_string_t * msg, const char * line,
         const int64_t epoch_usec );
 
 static void r2_sli_stream( struct r2_sli * self, r2_buffer_splitter splitter,
         r2_sli_publisher publisher, const int64_t period_usec );
 
-static void r2_sli_stream_line( struct r2_sli * self, 
+static void r2_sli_stream_line( struct r2_sli * self,
         r2_sli_publisher publisher, const int64_t period_usec );
 
 #endif // R2_SLI_H
@@ -118,7 +118,7 @@ void r2_sli_management_control_handler(const lcm_recv_buf_t *rbuf,
 
 /*** Output publishers ***/
 
-void r2_sli_raw_serial_line_publisher( struct r2_sli * self, 
+void r2_sli_raw_serial_line_publisher( struct r2_sli * self,
         const char * channel, raw_string_t * msg, const char * line,
         const int64_t epoch_usec )
 {

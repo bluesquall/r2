@@ -150,13 +150,13 @@ int r2_serial_port_set_baud_rate( struct r2_serial_port * self,
         perror("tcgetattr()");
         return -1;
     }
-    if( baud_rate != cfgetispeed( &options ) ) { 
+    if( baud_rate != cfgetispeed( &options ) ) {
         if( -1 == cfsetispeed( &options, baud_rate ) ) {
             perror("cfsetispeed()");
             return -1;
         }
     }
-    if( baud_rate != cfgetospeed( &options ) ) { 
+    if( baud_rate != cfgetospeed( &options ) ) {
         if( -1 == cfsetospeed( &options, baud_rate ) ) {
             perror("cfsetospeed()");
             return -1;
