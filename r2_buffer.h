@@ -18,6 +18,9 @@ struct r2_buffer {
 
 typedef size_t (*frame_finder)( const char * data, char * begin );
 
+typedef size_t ( * r2_buffer_splitter )( struct r2_buffer * self, char * frame,
+        size_t maxlen );
+
 struct r2_buffer * r2_buffer_create( size_t size );
 
 void r2_buffer_destroy( struct r2_buffer * self );
