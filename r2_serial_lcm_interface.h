@@ -48,8 +48,8 @@ static void r2_sli_raw_serial_line_publisher( struct r2_sli * self,
         const char * channel, raw_string_t * msg, const char * line,
         const int64_t epoch_usec );
 
-static void r2_sli_stream( struct r2_sli * self, void * data_splitter,
-        void * publisher, const int64_t period );
+static void r2_sli_stream( struct r2_sli * self, r2_buffer_splitter splitter,
+        r2_sli_publisher publisher, const int64_t period_usec );
 
 static void r2_sli_stream_line( struct r2_sli * self, 
         r2_sli_publisher publisher, const int64_t period_usec );
@@ -129,17 +129,9 @@ void r2_sli_raw_serial_line_publisher( struct r2_sli * self,
 
 /*** Streaming methods ***/
 
-void r2_sli_stream( struct r2_sli * self, void * data_splitter, 
-        void * publisher, const int64_t period )
+void r2_sli_stream( struct r2_sli * self, r2_buffer_splitter splitter,
+        r2_sli_publisher publisher, const int64_t period_usec )
 {
-    fprintf( stderr, "r2_sli_stream not yet implemented\n" );
-    fprintf( stderr, "look at r2_sli_stream_line in the meantime\n" );
-}
-
-void r2_sli_stream_line( struct r2_sli * self, r2_sli_publisher publisher,
-        const int64_t period_usec )
-{
-    // TODO: Revise to simply call r2_sli_stream.
     const struct timespec period = { 0, 900 * period_usec };
     fd_set rfds; // file descriptors to check for readability with select
     const int sfd = self->sio->fd;
@@ -148,9 +140,9 @@ void r2_sli_stream_line( struct r2_sli * self, r2_sli_publisher publisher,
     int64_t epoch_usec = 0;
     int run = 1;
 
-    size_t line_size = self->sio->buffer->size;
-    char line[line_size];
-    memset(line, '\0', line_size);
+    size_t frame_size = self->sio->buffer->size;
+    char frame[frame_size];
+    memset( frame, '\0', frame_size );
 
     while( run ) {
         // add both i/o file descriptors to the fdset for select
@@ -161,10 +153,9 @@ void r2_sli_stream_line( struct r2_sli * self, r2_sli_publisher publisher,
         if( -1 != select( maxfd, &rfds, NULL, NULL, NULL ) ) {
             if( FD_ISSET( sfd, &rfds ) ) { // check for serial input first
                 r2_buffer_fill( self->sio->buffer, sfd );
-                while( r2_buffer_get_any_line( self->sio->buffer, line,
-                            line_size ) ) {
+                while( splitter( self->sio->buffer, frame, frame_size ) ) {
                     epoch_usec = r2_epoch_usec_now(); // update timestamp
-                    publisher( self, line, epoch_usec ); // process & publish
+                    publisher( self, frame, epoch_usec ); // process & publish
                     r2_buffer_fill( self->sio->buffer, sfd ); // get moar data
                 }
             }
@@ -185,6 +176,13 @@ void r2_sli_stream_line( struct r2_sli * self, r2_sli_publisher publisher,
             }
         }
     }
+
+}
+
+void r2_sli_stream_line( struct r2_sli * self, r2_sli_publisher publisher,
+        const int64_t period_usec )
+{
+    r2_sli_stream( self, r2_buffer_get_any_line, publisher, period_usec );
 }
 
 /*** Polling methods ***/
