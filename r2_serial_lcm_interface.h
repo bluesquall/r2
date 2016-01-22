@@ -162,9 +162,11 @@ void r2_sli_stream( struct r2_sli * self, r2_buffer_splitter splitter,
             if( FD_ISSET( lfd, &rfds ) ) { // then check for LCM input
                 lcm_handle( self->lcm ); // handle all LCM input with handlers
             }
+#ifdef SLEEP
             if( r2_epoch_usec_now() - epoch_usec < period_usec ) {
                 nanosleep( &period, NULL ); // sleep if you recently read a line
             }
+#endif // SLEEP
         } else {
             perror( "select()" );
             if( errno == EINTR ) {
