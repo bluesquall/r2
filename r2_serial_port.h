@@ -50,6 +50,18 @@ int r2_serial_port_set_options( struct r2_serial_port * self,
  */
 int r2_serial_port_set_baud_rate( struct r2_serial_port * self,
         speed_t baud_rate );
+/*
+ *
+ */
+int r2_serial_port_set_vmin_vtime(struct r2_serial_port * self, int vmin,
+        int vtime);
+
+
+/*
+ *
+ */
+int r2_serial_port_set_nonblocking(struct r2_serial_port * self);
+
 
 #endif // R2_SERIAL_PORT_H
 
@@ -167,5 +179,30 @@ int r2_serial_port_set_baud_rate( struct r2_serial_port * self,
     }
     return 0;
 }
+
+
+int r2_serial_port_set_vmin_vtime(struct r2_serial_port * self, int vmin,
+        int vtime)
+{
+    struct termios tio;                                                 
+    if (-1 == tcgetattr(self->fd, &tio)) {                                    
+        perror("tcgetattr");                                            
+        return -1;                                                      
+    }                                                                   
+    tio.c_cc[VMIN] = vmin;                                                 
+    tio.c_cc[VTIME] = vtime;                                                
+    if (-1 == tcsetattr(self->fd, TCSANOW, &tio)) {                           
+        perror("tcgetattr");                                            
+        return -1;                                                      
+    }
+    return 1;
+}
+
+
+int r2_serial_port_set_nonblocking(struct r2_serial_port * self)
+{
+    r2_serial_port_set_vmin_vtime(self, 0, 0);
+}
+
 
 #endif // R2_SERIAL_PORT_I
