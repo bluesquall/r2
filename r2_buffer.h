@@ -83,11 +83,8 @@ size_t r2_buffer_available_space( const struct r2_buffer * self )
 
 size_t r2_buffer_fill( struct r2_buffer * self, int fd )
 {
-    size_t space = self->size - self->position;
-    size_t incoming = 0; // bytes available on the serial port
-    ioctl(fd, FIONREAD, &incoming); // TODO: check return value
-    size_t bytes_to_read = space > incoming ? incoming : space;
-    ssize_t bytes_read = read(fd, self->data + self->position, bytes_to_read);
+    ssize_t bytes_read = read(fd, self->data + self->position, 
+        self->size - self->position);
     if( -1 == bytes_read ) {
         perror( "r2_buffer_fill read()" );
     } else {
