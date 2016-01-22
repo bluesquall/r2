@@ -8,7 +8,6 @@
 #include <stdio.h> // for fprintf, stderr
 #include <termios.h> // for serial port
 
-#include <sys/ioctl.h> // to get the number of bytes available on a serial port
 #include <sys/select.h> // to select on the file descriptor for a serial port
 
 #include "r2_buffer.h"
