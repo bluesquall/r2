@@ -49,10 +49,10 @@ static void r2_sli_raw_serial_line_publisher( struct r2_sli * self,
         const int64_t epoch_usec );
 
 static void r2_sli_stream( struct r2_sli * self, r2_buffer_splitter splitter,
-        r2_sli_publisher publisher, const int64_t period_usec );
+        r2_sli_publisher publisher );
 
 static void r2_sli_stream_line( struct r2_sli * self,
-        r2_sli_publisher publisher, const int64_t period_usec );
+        r2_sli_publisher publisher );
 
 #endif // R2_SLI_H
 
@@ -130,9 +130,9 @@ void r2_sli_raw_serial_line_publisher( struct r2_sli * self,
 /*** Streaming methods ***/
 
 void r2_sli_stream( struct r2_sli * self, r2_buffer_splitter splitter,
-        r2_sli_publisher publisher, const int64_t period_usec )
+        r2_sli_publisher publisher )
 {
-    const struct timespec period = { 0, 900 * period_usec };
+    const struct timespec wait_before = { 0, 10 };
     fd_set rfds; // file descriptors to check for readability with select
     const int sfd = self->sio->fd;
     const int lfd = lcm_get_fileno(self->lcm);
@@ -152,9 +152,10 @@ void r2_sli_stream( struct r2_sli * self, r2_buffer_splitter splitter,
 
         if( -1 != select( maxfd, &rfds, NULL, NULL, NULL ) ) {
             if( FD_ISSET( sfd, &rfds ) ) { // check for serial input first
+                epoch_usec = r2_epoch_usec_now(); // update timestamp
+                nanosleep( &wait_before, NULL ); // wait for full packet
                 r2_buffer_fill( self->sio->buffer, sfd );
                 while( splitter( self->sio->buffer, frame, frame_size ) ) {
-                    epoch_usec = r2_epoch_usec_now(); // update timestamp
                     publisher( self, frame, epoch_usec ); // process & publish
                     r2_buffer_fill( self->sio->buffer, sfd ); // get moar data
                 }
@@ -162,11 +163,6 @@ void r2_sli_stream( struct r2_sli * self, r2_buffer_splitter splitter,
             if( FD_ISSET( lfd, &rfds ) ) { // then check for LCM input
                 lcm_handle( self->lcm ); // handle all LCM input with handlers
             }
-#ifdef SLEEP
-            if( r2_epoch_usec_now() - epoch_usec < period_usec ) {
-                nanosleep( &period, NULL ); // sleep if you recently read a line
-            }
-#endif // SLEEP
         } else {
             perror( "select()" );
             if( errno == EINTR ) {
@@ -181,10 +177,9 @@ void r2_sli_stream( struct r2_sli * self, r2_buffer_splitter splitter,
 
 }
 
-void r2_sli_stream_line( struct r2_sli * self, r2_sli_publisher publisher,
-        const int64_t period_usec )
+void r2_sli_stream_line( struct r2_sli * self, r2_sli_publisher publisher )
 {
-    r2_sli_stream( self, r2_buffer_get_any_line, publisher, period_usec );
+    r2_sli_stream( self, r2_buffer_get_any_line, publisher );
 }
 
 /*** Polling methods ***/
