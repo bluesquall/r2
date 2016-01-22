@@ -23,8 +23,8 @@ const struct termios R2_SERIAL_DEFAULT_OPTIONS = {
     .c_oflag = 0,
     .c_cflag = B9600 | CS8 | CLOCAL | CREAD,
     .c_lflag = 0,
-    .c_cc[VMIN] = 255,
-    .c_cc[VTIME] = 1
+    .c_cc[VMIN] = 0,
+    .c_cc[VTIME] = 0
 };
 
 /*
