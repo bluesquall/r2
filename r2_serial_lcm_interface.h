@@ -5,11 +5,14 @@
 #ifndef R2_SLI_H
 #define R2_SLI_H
 
+#include <errno.h> // for EXIT_SUCCESS, EXIT_FAILURE
+#include <fcntl.h> // for write
+#include <signal.h> // for SIGHUP, SIGINT, SIGTERM, sigset_t, sigaction
 #include <stdio.h> // for fprintf, stderr
 #include <stdint.h> // for int64_t
 #include <termios.h> // for serial port
 #include <time.h> // for nanosleep
-#include <unistd.h> // for getpid
+#include <unistd.h> // for getpid, STDOUT_FILENO, STDIN_FILENO
 
 #include <lcm/lcm.h>
 
@@ -39,6 +42,10 @@ struct r2_sli * r2_sli_create( const char * name,  const char * device,
         const char * provider );
 
 static void r2_sli_destroy( struct r2_sli * self );
+
+static int r2_sli_keep_streaming = 1;
+
+static void r2_sli_handle_stop_signal (int signal);
 
 static void r2_sli_management_control_handler( const lcm_recv_buf_t *rbuf,
         const char * channel, const management_control_t * msg,
@@ -96,13 +103,42 @@ struct r2_sli * r2_sli_create( const char * name,  const char * device,
 
 void r2_sli_destroy( struct r2_sli * self)
 {
-    r2_serial_port_destroy(self->sio);
+    printf("Destroying Serial-LCM interface at %"PRId64".\n", 
+            r2_epoch_usec_now());
 
-    // unsubscribe from the standard subscriptions
+    // TODO: Publish (a few?) messages saying that the daemon is exiting.
+
+    printf("Destroying serial port.\n");
+    r2_serial_port_destroy(self->sio);
+    printf("Destroyed serial port.\n");
+
+    printf("Unsubscribing from the standard LCM subscriptions.\n");
     management_control_t_unsubscribe(self->lcm,
             self->management_control_subscription);
+    printf("Unsubscribed from the standard LCM subscriptions.\n");
 
+    printf("Destroying LCM instance.\n");
     lcm_destroy(self->lcm);
+    printf("Destroyed LCM instance.\n");
+
+    printf("Destroyed Serial-LCM interface at %"PRId64".\n",
+            r2_epoch_usec_now());
+}
+
+/*** Signal handlers ***/
+static void r2_sli_handle_stop_signal (int signal)
+{
+    switch (signal) {
+        case SIGHUP:
+        case SIGINT:
+        case SIGTERM:
+            write(STDOUT_FILENO, "Caught stop signal.\n", 20);
+            r2_sli_keep_streaming = 0;
+            break;
+        default:
+            write(STDERR_FILENO, "Caught non-stop signal.\n", 24);
+            r2_sli_keep_streaming = 1;
+    }
 }
 
 /*** Input handlers ***/
@@ -129,8 +165,8 @@ void r2_sli_raw_serial_line_publisher( struct r2_sli * self,
 
 /*** Streaming methods ***/
 
-void r2_sli_stream( struct r2_sli * self, r2_buffer_splitter splitter,
-        r2_sli_publisher publisher )
+void r2_sli_stream(struct r2_sli * self, r2_buffer_splitter splitter,
+        r2_sli_publisher publisher)
 {
     const struct timespec wait_before = { 0, 10 };
     fd_set rfds; // file descriptors to check for readability with select
@@ -138,48 +174,72 @@ void r2_sli_stream( struct r2_sli * self, r2_buffer_splitter splitter,
     const int lfd = lcm_get_fileno(self->lcm);
     const int maxfd = sfd > lfd ? sfd + 1 : lfd + 1;
     int64_t epoch_usec = 0;
-    int run = 1;
+
+    struct sigaction sa;
+    sigset_t unblocked, blocked;
 
     size_t frame_size = self->sio->buffer->size;
     char frame[frame_size];
-    memset( frame, '\0', frame_size );
+    memset(frame, '\0', frame_size);
 
-    while( run ) {
+    sigemptyset(&blocked);
+    sigaddset(&blocked, SIGHUP);
+    sigaddset(&blocked, SIGINT);
+    sigaddset(&blocked, SIGTERM);
+
+    if (sigprocmask(SIG_BLOCK, &blocked, &unblocked) < 0) {
+        perror("sigprocmask");
+        exit(EXIT_FAILURE);
+    }
+
+    sa.sa_handler = &r2_sli_handle_stop_signal;
+    sigfillset(&sa.sa_mask); // Block every signal during the handler
+
+    if (sigaction(SIGHUP, &sa, NULL) == -1) {
+        perror("sigaction cannot handle SIGHUP"); // should not happen
+    }
+    if (sigaction(SIGINT, &sa, NULL) == -1) {
+        perror("sigaction cannot handle SIGINT"); // should not happen
+    }
+    if (sigaction(SIGTERM, &sa, NULL) == -1) {
+        perror("sigaction cannot handle SIGTERM"); // should not happen
+    }
+
+    r2_sli_keep_streaming = 1;
+    while (r2_sli_keep_streaming) {
         // add both i/o file descriptors to the fdset for select
         FD_ZERO(&rfds);
         FD_SET(sfd, &rfds);
         FD_SET(lfd, &rfds);
 
-        if( -1 != select( maxfd, &rfds, NULL, NULL, NULL ) ) {
-            if( FD_ISSET( sfd, &rfds ) ) { // check for serial input first
+        if (-1 != pselect(maxfd, &rfds, NULL, NULL, NULL, &unblocked)) {
+            if (FD_ISSET(sfd, &rfds)) { // check for serial input first
                 epoch_usec = r2_epoch_usec_now(); // update timestamp
-                nanosleep( &wait_before, NULL ); // wait for full packet
-                r2_buffer_fill( self->sio->buffer, sfd );
-                while( splitter( self->sio->buffer, frame, frame_size ) ) {
-                    publisher( self, frame, epoch_usec ); // process & publish
-                    r2_buffer_fill( self->sio->buffer, sfd ); // get moar data
+                nanosleep(&wait_before, NULL); // wait for full packet
+                r2_buffer_fill(self->sio->buffer, sfd);
+                while (splitter(self->sio->buffer, frame, frame_size)) {
+                    publisher(self, frame, epoch_usec); // process & publish
+                    r2_buffer_fill(self->sio->buffer, sfd); // get moar data
                 }
             }
-            if( FD_ISSET( lfd, &rfds ) ) { // then check for LCM input
-                lcm_handle( self->lcm ); // handle all LCM input with handlers
+            if (FD_ISSET(lfd, &rfds)) { // then check for LCM input
+                lcm_handle(self->lcm); // handle all LCM input with handlers
             }
         } else {
-            perror( "select()" );
-            if( errno == EINTR ) {
-                run = 1; // Keep going if interrupted by a system call.
-                // TODO: Check and handle signals instead.
-                //       SIGTERM could be used to terminate cleanly.
-            } else {
-                run = 0;
+            switch errno {
+                case EINTR: // interrupted by a signal
+                    break;
+                default:
+                    perror("pselect");
+                    r2_sli_keep_streaming = 0;
             }
         }
     }
-
 }
 
-void r2_sli_stream_line( struct r2_sli * self, r2_sli_publisher publisher )
+void r2_sli_stream_line(struct r2_sli * self, r2_sli_publisher publisher)
 {
-    r2_sli_stream( self, r2_buffer_get_any_line, publisher );
+    r2_sli_stream(self, r2_buffer_get_any_line, publisher);
 }
 
 /*** Polling methods ***/

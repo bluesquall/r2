@@ -115,10 +115,18 @@ struct r2_serial_port * r2_serial_port_create( const char * device,
 
 void r2_serial_port_destroy( struct r2_serial_port * self )
 {
-    if( self ) {
-        close( self->fd );
-        r2_buffer_destroy( self->buffer );
-        free( self );
+    if (self) {
+        printf("Closing serial port file descriptor.\n");
+        close(self->fd);
+        printf("Closed serial port file descriptor.\n");
+
+        printf("Destroying r2_buffer.\n");
+        r2_buffer_destroy(self->buffer);
+        printf("Destroyed r2_buffer.\n");
+
+        printf("Freeing r2_serial_port.\n");
+        free(self);
+        printf("Freed r2_serial_port.\n");
     }
 }
 
