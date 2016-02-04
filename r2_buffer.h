@@ -54,7 +54,7 @@ void r2_buffer_print( const struct r2_buffer * self );
 #ifndef R2_BUFFER_I
 #define R2_BUFFER_I
 
-struct r2_buffer * r2_buffer_create( size_t size )
+struct r2_buffer * r2_buffer_create(size_t size)
 {
     struct r2_buffer * self = calloc(1, sizeof(struct r2_buffer));
     self->size = size;
@@ -63,11 +63,16 @@ struct r2_buffer * r2_buffer_create( size_t size )
     return self;
 }
 
-void r2_buffer_destroy( struct r2_buffer * self )
+void r2_buffer_destroy(struct r2_buffer * self)
 {
-    if( self ) {
-        free(self->data);
-        free(self);
+    if (self) {
+        printf("Freeing r2_buffer->data.\n");
+//TODO: causing symptoms similar to double-free        free(self->data);
+        printf("Freed r2_buffer->data.\n");
+
+        printf("Freeing r2_buffer.\n");
+//TODO: causing symptoms similar to double-free        free(self);
+        printf("Freed r2_buffer.\n");
     }
 }
 
