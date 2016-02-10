@@ -143,7 +143,7 @@ int r2_serial_port_set_options( struct r2_serial_port * self,
         retval = tcsetattr( self->fd, TCSAFLUSH, &R2_SERIAL_DEFAULT_OPTIONS );
     } else {
 #ifdef DEBUG
-        fprintf(stderr, "termios options: i=%d, o=%d\n", options->c_iflag,
+        fprintf(stderr, "termios options: i=%lu, o=%lu\n", options->c_iflag,
             options->c_oflag );
 #endif
 // TODO: Optionally set defaults, then only overwrite specified options.
