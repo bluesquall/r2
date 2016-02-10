@@ -32,34 +32,37 @@ struct r2_sli {
     struct r2_serial_port * sio;
     lcm_t * lcm;
     management_control_t_subscription_t * management_control_subscription;
+    raw_string_t_subscription_t * raw_string_to_serial_subscription;
 };
 
 typedef void ( * r2_sli_publisher )( struct r2_sli * self, const char * data,
         const int64_t epoch_usec );
 
-struct r2_sli * r2_sli_create( const char * name,  const char * device,
+struct r2_sli * r2_sli_create (const char * name,  const char * device,
         const speed_t baud_rate, const size_t buffer_size,
-        const char * provider );
+        const char * provider);
 
-static void r2_sli_destroy( struct r2_sli * self );
+static void r2_sli_destroy (struct r2_sli * self);
 
 static int r2_sli_keep_streaming = 1;
 
 static void r2_sli_handle_stop_signal (int signal);
 
-static void r2_sli_management_control_handler( const lcm_recv_buf_t *rbuf,
-        const char * channel, const management_control_t * msg,
-        void * user);
+static void r2_sli_management_control_handler (const lcm_recv_buf_t *rbuf,
+        const char * channel, const management_control_t * msg, void * user);
 
-static void r2_sli_raw_serial_line_publisher( struct r2_sli * self,
+static void r2_sli_raw_string_to_serial_handler (const lcm_recv_buf_t *rbuf,
+        const char * channel, const raw_string_t * msg, void * user);
+
+static void r2_sli_raw_serial_line_publisher (struct r2_sli * self,
         const char * channel, raw_string_t * msg, const char * line,
-        const int64_t epoch_usec );
+        const int64_t epoch_usec);
 
-static void r2_sli_stream( struct r2_sli * self, r2_buffer_splitter splitter,
-        r2_sli_publisher publisher );
+static void r2_sli_stream (struct r2_sli * self, r2_buffer_splitter splitter,
+        r2_sli_publisher publisher);
 
-static void r2_sli_stream_line( struct r2_sli * self,
-        r2_sli_publisher publisher );
+static void r2_sli_stream_line (struct r2_sli * self,
+        r2_sli_publisher publisher);
 
 #endif // R2_SLI_H
 
@@ -85,25 +88,28 @@ struct r2_sli * r2_sli_create( const char * name,  const char * device,
         return NULL;
     }
 
-    self->lcm = lcm_create( provider );
-    if( !self->lcm ) {
+    self->lcm = lcm_create (provider);
+    if (!self->lcm) {
         fprintf(stderr, "Could not create LCM instance.");
         return NULL;
     }
 
-    char control_channel[strlen( name ) + 5];
-    sprintf( control_channel, "%s.ctrl", name );
+    char channel[strlen(name) + 5];
 
+    sprintf(channel, "%s.ctrl", name);
     self->management_control_subscription = management_control_t_subscribe(
-            self->lcm, control_channel, &r2_sli_management_control_handler,
-            NULL);
+            self->lcm, channel, &r2_sli_management_control_handler, self);
+
+    sprintf(channel, "%s.tx", name);
+    self->raw_string_to_serial_subscription = raw_string_t_subscribe(self->lcm,
+            channel, &r2_sli_raw_string_to_serial_handler, self);
 
     return self;
 }
 
 void r2_sli_destroy( struct r2_sli * self)
 {
-    printf("Destroying Serial-LCM interface at %"PRId64".\n", 
+    printf("Destroying Serial-LCM interface at %"PRId64".\n",
             r2_epoch_usec_now());
 
     // TODO: Publish (a few?) messages saying that the daemon is exiting.
@@ -115,6 +121,8 @@ void r2_sli_destroy( struct r2_sli * self)
     printf("Unsubscribing from the standard LCM subscriptions.\n");
     management_control_t_unsubscribe(self->lcm,
             self->management_control_subscription);
+    raw_string_t_unsubscribe(self->lcm,
+            self->raw_string_to_serial_subscription);
     printf("Unsubscribed from the standard LCM subscriptions.\n");
 
     printf("Destroying LCM instance.\n");
@@ -144,13 +152,23 @@ static void r2_sli_handle_stop_signal (int signal)
 /*** Input handlers ***/
 
 void r2_sli_management_control_handler(const lcm_recv_buf_t *rbuf,
-        const char * channel, const management_control_t * msg,
-        void * user)
+        const char * channel, const management_control_t * msg, void * user)
 {
     printf("Received message on channel %s: signal=%s\n", channel, msg->signal);
     // TODO: Let incoming signals actually do something!
 }
 
+void r2_sli_raw_string_to_serial_handler(const lcm_recv_buf_t * rbuf,
+        const char * channel, const raw_string_t * msg, void * user)
+{
+    struct r2_sli * self = (struct r2_sli *)user; // cast the void pointer
+#ifdef DEBUG
+    printf("Forwarding |%s| to file descriptor %d\n", msg->text, self->sio->fd);
+#endif // DEBUG
+    write(self->sio->fd, msg->text, strlen(msg->text));
+    // could use dprintf here instead:
+    // dprintf(self->sio->fd, "%s", msg->text);
+}
 
 /*** Output publishers ***/
 
