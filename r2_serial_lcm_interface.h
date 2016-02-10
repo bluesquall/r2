@@ -162,6 +162,9 @@ void r2_sli_raw_string_to_serial_handler(const lcm_recv_buf_t * rbuf,
         const char * channel, const raw_string_t * msg, void * user)
 {
     struct r2_sli * self = (struct r2_sli *)user; // cast the void pointer
+#ifdef DEBUG
+    printf("Forwarding |%s| to file descriptor %d\n", msg->text, self->sio->fd);
+#endif // DEBUG
     write(self->sio->fd, msg->text, strlen(msg->text));
     // could use dprintf here instead:
     // dprintf(self->sio->fd, "%s", msg->text);
