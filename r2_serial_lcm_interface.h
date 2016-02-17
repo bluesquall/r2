@@ -58,6 +58,9 @@ static void r2_sli_raw_serial_line_publisher (struct r2_sli * self,
         const char * channel, raw_string_t * msg, const char * line,
         const int64_t epoch_usec);
 
+static void r2_sli_syslog (struct r2_sli * self, const char * level,
+        char * text);
+
 static void r2_sli_stream (struct r2_sli * self, r2_buffer_splitter splitter,
         r2_sli_publisher publisher);
 
@@ -179,6 +182,19 @@ void r2_sli_raw_serial_line_publisher( struct r2_sli * self,
     msg->epoch_usec = epoch_usec;
     msg->text = (char *)line; // cast to explicitly drop const modifier
     raw_string_t_publish( self->lcm, channel, msg );
+}
+
+/*** Syslog on LCM ***/
+
+void r2_sli_syslog(struct r2_sli * self, const char * level, char * text)
+{
+    char channel[32];
+    sprintf(channel, "syslog.%s", level);
+    raw_string_t msg = {
+        .epoch_usec = r2_epoch_usec_now(),
+        .text = text,
+    };
+    raw_string_t_publish(self->lcm, channel, &msg);
 }
 
 /*** Streaming methods ***/
