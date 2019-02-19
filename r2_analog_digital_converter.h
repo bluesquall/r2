@@ -19,6 +19,8 @@ struct r2_adc {
     double offset;
 };
 
+#define SATURATED 4194303
+
 /*
  *
  */
@@ -60,7 +62,7 @@ struct r2_adc * r2_adc_create( const char * device, const int bits,
 
     // send a newline to start the ADC
     if( 1 != write( self->fd, "\n", 1 ) ){
-        fprintf( stderr, "wrote %zub instead of 1b to file descriptor\n" );
+        fprintf( stderr, "could not write newline to file descriptor\n" );
         return NULL;
     }
 
@@ -96,7 +98,8 @@ long r2_adc_read( struct r2_adc * self )
             return 0;
         }
 #ifdef DEBUG
-        fprintf( stderr, "read string '%s' from fd %d\n", buffer, self->fd );
+        fprintf( stderr, "read %zub string '%s' from fd %d\n",
+                bytes_read, buffer, self->fd );
 #endif // DEBUG
     }
     long count = strtol( buffer, &end, 10 );
@@ -108,6 +111,9 @@ long r2_adc_read( struct r2_adc * self )
         errno = 0;
     } else if( end == buffer ) {
         fprintf( stderr, "could not convert: '%s'\n", buffer );
+    }
+    if ( count == SATURATED ) {
+        fprintf( stderr, "ADC saturated: %ld \n", count );
     }
     return count;
 }
