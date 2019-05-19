@@ -86,6 +86,12 @@ size_t r2_buffer_available_space( const struct r2_buffer * self )
     return self->size - self->position;
 }
 
+size_t r2_buffer_read_into( struct r2_buffer * self, int fd, size_t n )
+{
+    fprintf( STDERR, "r2_buffer_read_into not yet implemented" );
+    exit( EXIT_FAILURE );
+}
+
 size_t r2_buffer_fill( struct r2_buffer * self, int fd )
 {
     ssize_t bytes_read = read(fd, self->data + self->position, 
