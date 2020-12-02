@@ -1,0 +1,13 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+r2_db_dir=@sysconfdir@/r2/db
+
+Name: @PACKAGE_NAME@
+Description: a collection of utilities in C
+Version: @PACKAGE_VERSION@
+Cflags: -I${includedir}/r2
+Requires: @AX_PACKAGE_REQUIRES@
+Requires.private: @AX_PACKAGE_REQUIRES_PRIVATE@

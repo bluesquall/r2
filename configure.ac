@@ -7,7 +7,7 @@ AC_INIT([r2],
 AC_CONFIG_AUX_DIR([.build-aux])
 AC_CONFIG_MACRO_DIRS([.build-aux/m4])
 AC_CONFIG_HEADERS([config.h])
-AM_INIT_AUTOMAKE([subdir-objects dist-xz -Wall -Wno-portability foreign])
+AM_INIT_AUTOMAKE([subdir-objects dist-xz no-dist-gzip -Wall foreign])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([r2.pc:r2.pc.in])
 
