@@ -6,7 +6,7 @@ pipelines:
         name: build and check
         script:
           - apt-get update
-          - apt-get install -y --no-install-recommends build-essential autoconf git
+          - apt-get install -y build-essential autoconf git
           - autoreconf --install
           - ./configure
           - make
@@ -18,7 +18,7 @@ pipelines:
         name: build and POST
         script:
           - apt-get update
-          - apt-get install -y --no-install-recommends build-essential autoconf git
+          - apt-get install -y build-essential autoconf git
           - autoreconf --install
           - ./configure
           - make
