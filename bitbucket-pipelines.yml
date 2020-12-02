@@ -27,5 +27,5 @@ pipelines:
           - pipe: atlassian/bitbucket-upload-file:0.3.2
             variables:
               BITBUCKET_USERNAME: $BITBUCKET_REPO_OWNER
-              BITBUCKET_APP_PASSWORD: $PIPELINES_APP_PASSWORD
+              BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
               FILENAME: "*.tar.xz"
