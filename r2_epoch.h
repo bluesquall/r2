@@ -31,13 +31,13 @@ struct timespec r2_epoch_timespec_now( void ){
 int64_t r2_epoch_usec_now( void )
 {
     struct timespec t = r2_epoch_timespec_now();
-    return (int64_t)( t.tv_sec * 1000000 ) + (int64_t)( t.tv_nsec / 1000 );
+    return (int64_t)( t.tv_sec ) * 1000000 + (int64_t)( t.tv_nsec / 1000 );
 }
 
 int64_t r2_epoch_msec_now( void )
 {
     struct timespec t = r2_epoch_timespec_now();
-    return (int64_t)( t.tv_sec * 1000 ) + (int64_t)( t.tv_nsec / 1000000 );
+    return (int64_t)( t.tv_sec ) * 1000 + (int64_t)( t.tv_nsec / 1000000 );
 }
 
 int64_t r2_epoch_sec_now( void )
