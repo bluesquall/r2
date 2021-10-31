@@ -70,6 +70,15 @@ struct r2_qf_t r2_nf_to_qf(const struct r2_nf_t n){
     return q;
 }
 
+struct r2_qf_t r2_qf_product( struct r2_qf_t q1, struct r2_qf_t q2) {
+    struct r2_qf_t q = { 0 };
+    q.h = q1.h * q2.h - q1.i * q2.i - q1.j * q2.j - q1.k * q2.k;
+    q.i = q1.h * q2.i + q1.i * q2.h + q1.j * q2.k - q1.k * q2.j;
+    q.j = q1.h * q2.j - q1.i * q2.k + q1.j * q2.h + q1.k * q2.i;
+    q.k = q1.h * q2.k + q1.i * q2.j - q1.j * q2.i - q1.k * q2.h;
+    return q;
+}
+
 struct r2_nf_t r2_qf_to_nf(const struct r2_qf_t q){
     float sr_cp = 2 * (q.h * q.i + q.j * q.k);
     float cr_cp = 1 - 2 * (q.i * q.i + q.j * q.j);
