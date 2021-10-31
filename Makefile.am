@@ -5,6 +5,7 @@ dist_doc_DATA = README.md
 pkgconfig_DATA = r2.pc
 pkginclude_HEADERS = \
 		r2_epoch.h \
+		r2_quaternion.h \
 		r2_timerfd.h
 
 TESTS = test-r2_epoch
