@@ -75,7 +75,7 @@ struct r2_qf_t r2_qf_product( struct r2_qf_t q1, struct r2_qf_t q2) {
     q.h = q1.h * q2.h - q1.i * q2.i - q1.j * q2.j - q1.k * q2.k;
     q.i = q1.h * q2.i + q1.i * q2.h + q1.j * q2.k - q1.k * q2.j;
     q.j = q1.h * q2.j - q1.i * q2.k + q1.j * q2.h + q1.k * q2.i;
-    q.k = q1.h * q2.k + q1.i * q2.j - q1.j * q2.i - q1.k * q2.h;
+    q.k = q1.h * q2.k + q1.i * q2.j - q1.j * q2.i + q1.k * q2.h;
     return q;
 }
 
