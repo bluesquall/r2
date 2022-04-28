@@ -32,3 +32,4 @@ test/.deps/
 test/.dirstamp
 *.log
 *.trs
+*.pc
